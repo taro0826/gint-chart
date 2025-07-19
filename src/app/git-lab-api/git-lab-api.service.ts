@@ -16,6 +16,11 @@ import { GitLabConfigStoreService } from '@src/app/store/git-lab-config-store.se
 type EndPoint = 'issues' | 'milestones' | '' | 'labels' | 'members';
 
 /**
+ * POSTメソッドで使用できるエンドポイント
+ */
+type PostEndPoint = 'issues';
+
+/**
  * ページネーションのAPIでデータを取得した結果
  */
 export type PagenationResult<S> = {
@@ -209,7 +214,7 @@ export class GitLabApiService {
    */
   post<T, S>(
     projectId: string,
-    endpoint: EndPoint,
+    endpoint: PostEndPoint,
     body: Record<string, unknown> | null,
     mapFn: (data: T) => S | null
   ): Observable<S> {
