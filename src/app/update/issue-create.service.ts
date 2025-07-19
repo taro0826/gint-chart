@@ -27,11 +27,16 @@ export class IssueCreateService {
       title: request.title,
       description: request.description,
       milestone_id: request.milestoneId,
-      labels: request.labels.join(','),
     };
 
+    // ラベルが存在する場合のみ追加
+    if (request.labels && request.labels.length > 0) {
+      body['labels'] = request.labels.join(',');
+    }
+
+    // 担当者が指定されている場合、assignee_idsとして配列で送信
     if (request.assigneeId) {
-      body['assignee_id'] = request.assigneeId;
+      body['assignee_ids'] = [request.assigneeId];
     }
 
     return this.gitLabApiService.post<GitLabApiIssue, any>(

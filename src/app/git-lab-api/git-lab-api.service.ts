@@ -233,7 +233,7 @@ export class GitLabApiService {
       .pipe((data: T) => {
         const convertedData = mapFn(data);
         if (isNull(convertedData)) {
-          throw new Error('Failed to convert GitLab API response to Issue');
+          throw new Error('Failed to convert GitLab API response');
         }
         return convertedData;
       });
