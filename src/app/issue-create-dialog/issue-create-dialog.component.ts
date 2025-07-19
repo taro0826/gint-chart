@@ -1,0 +1,278 @@
+import { Component, OnInit } from '@angular/core';
+import { IssueCreateDialogExpansionService } from '@src/app/issue-create-dialog/issue-create-dialog-expansion.service';
+import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
+import { LabelStoreService } from '@src/app/store/label-store.service';
+import { MemberStoreService } from '@src/app/store/member-store.service';
+import { ProjectStoreService } from '@src/app/store/project-store.service';
+import { ProjectTreeStoreService } from '@src/app/store/project-tree-store.service';
+import { IssueCreateService } from './issue-create.service';
+import { ToastService } from '@src/app/utils/toast.service';
+import { isUndefined } from '@src/app/utils/utils';
+import { Milestone } from '@src/app/model/milestone.model';
+import { Label } from '@src/app/model/label.model';
+import { Member } from '@src/app/model/member.model';
+import { Project } from '@src/app/model/project.model';
+import { Assertion } from '@src/app/utils/assertion';
+
+@Component({
+  selector: 'app-issue-create-dialog',
+  standalone: false,
+  templateUrl: './issue-create-dialog.component.html',
+  styleUrl: './issue-create-dialog.component.scss',
+})
+export class IssueCreateDialogComponent implements OnInit {
+  // フォームデータ
+  title = '';
+  description = '';
+  assigneeId = -1;
+  status = -1;
+  category: number[] = [];
+  resource: number[] = [];
+  startDate: string = '';
+  endDate: string = '';
+
+  milestone: Milestone | undefined;
+  project: Project | undefined;
+  isSubmitting = false;
+
+  constructor(
+    private readonly issueCreateDialogExpansionService: IssueCreateDialogExpansionService,
+    private readonly milestoneStore: MilestoneStoreService,
+    private readonly labelStore: LabelStoreService,
+    private readonly memberStore: MemberStoreService,
+    private readonly projectStore: ProjectStoreService,
+    private readonly projectTreeStore: ProjectTreeStoreService,
+    private readonly issueCreateService: IssueCreateService,
+    private readonly toastService: ToastService
+  ) {}
+
+  ngOnInit(): void {
+    const milestoneId = this.issueCreateDialogExpansionService.getExpandedMilestoneId();
+
+    if (isUndefined(milestoneId)) {
+      Assertion.assert('milestoneId is undefined', Assertion.no(38));
+      return;
+    }
+
+    this.milestone = this.milestoneStore.milestones.find(
+      (milestone) => milestone.id === milestoneId
+    );
+
+    if (this.milestone) {
+      // マイルストーンからプロジェクト情報を取得
+      this.projectTreeStore.projectTree$.subscribe(projectTrees => {
+        const projectTree = projectTrees.find(tree =>
+          tree.milestones.some(mt => mt.milestone.id === milestoneId)
+        );
+        if (projectTree) {
+          this.project = projectTree.project;
+        }
+      });
+    }
+  }
+
+  /**
+   * ステータス名を取得
+   */
+  getStatusName(statusId: number | undefined): string {
+    if (isUndefined(statusId) || statusId === -1) {
+      return '未設定';
+    }
+    const statusLabel = this.labelStore.findStatusLabel(statusId);
+    return statusLabel ? statusLabel.name : '不明';
+  }
+
+  /**
+   * 担当者名を取得
+   */
+  getAssigneeName(assigneeId: number | undefined): string {
+    if (isUndefined(assigneeId) || assigneeId === -1) {
+      return '未設定';
+    }
+    const member = this.memberStore.findMemberById(assigneeId);
+    return member ? member.name : '不明';
+  }
+
+  /**
+   * カテゴリラベルを取得
+   */
+  getCategoryLabels(): Label[] {
+    return this.labelStore.categoryLabels;
+  }
+
+  /**
+   * リソースラベルを取得
+   */
+  getResourceLabels(): Label[] {
+    return this.labelStore.resourceLabels;
+  }
+
+  /**
+   * ステータスラベルを取得
+   */
+  getStatusLabels(): Label[] {
+    return this.labelStore.statusLabels;
+  }
+
+  /**
+   * メンバー一覧を取得
+   */
+  getMembers(): Member[] {
+    return this.memberStore.members;
+  }
+
+  /**
+   * 背景色に応じたコントラスト色を計算
+   */
+  getContrastColor(backgroundColor: string): string {
+    // 16進数カラーコードをRGBに変換
+    const hex = backgroundColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    // 輝度を計算
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    // 輝度に基づいて白または黒を返す
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+  }
+
+  /**
+   * カテゴリラベルの選択状態を切り替え
+   */
+  toggleCategoryLabel(labelId: number): void {
+    const index = this.category.indexOf(labelId);
+    
+    if (index > -1) {
+      this.category.splice(index, 1);
+    } else {
+      this.category.push(labelId);
+    }
+  }
+
+  /**
+   * リソースラベルの選択状態を切り替え
+   */
+  toggleResourceLabel(labelId: number): void {
+    const index = this.resource.indexOf(labelId);
+    
+    if (index > -1) {
+      this.resource.splice(index, 1);
+    } else {
+      this.resource.push(labelId);
+    }
+  }
+
+  /**
+   * ラベルが選択されているかどうかを判定
+   */
+  isLabelSelected(labelId: number, type: 'category' | 'resource'): boolean {
+    const labels = type === 'category' ? this.category : this.resource;
+    return labels.includes(labelId);
+  }
+
+  /**
+   * ngForのパフォーマンス最適化のためのtrackBy関数
+   */
+  trackByLabel(index: number, label: Label): number {
+    return label.id;
+  }
+
+  trackByMember(index: number, member: Member): number {
+    return member.id;
+  }
+
+  /**
+   * フォームのバリデーション
+   */
+  isFormValid(): boolean {
+    return this.title.trim().length > 0 && this.title.trim().length <= 255;
+  }
+
+  /**
+   * フォームを送信
+   */
+  async onSubmit(): Promise<void> {
+    if (!this.isFormValid() || !this.milestone || !this.project) {
+      return;
+    }
+
+    this.isSubmitting = true;
+
+    try {
+      // ラベル配列を構築
+      const labels: string[] = [];
+      
+      // ステータスラベル
+      if (this.status !== -1) {
+        const statusLabel = this.labelStore.findStatusLabel(this.status);
+        if (statusLabel) {
+          labels.push(statusLabel.name);
+        }
+      }
+      
+      // カテゴリラベル
+      this.category.forEach((categoryId: number) => {
+        const categoryLabel = this.labelStore.findCategoryLabel(categoryId);
+        if (categoryLabel) {
+          labels.push(categoryLabel.name);
+        }
+      });
+      
+      // リソースラベル
+      this.resource.forEach((resourceId: number) => {
+        const resourceLabel = this.labelStore.findResourceLabel(resourceId);
+        if (resourceLabel) {
+          labels.push(resourceLabel.name);
+        }
+      });
+
+      // 日付情報をdescriptionに追加
+      let description = this.description || '';
+      if (this.startDate) {
+        description = `$$start-date:${this.startDate}$$\n${description}`;
+      }
+      if (this.endDate) {
+        description = `$$end-date:${this.endDate}$$\n${description}`;
+      }
+
+      await this.issueCreateService.createIssue({
+        projectId: this.project.id.toString(),
+        title: this.title.trim(),
+        description: description,
+        milestoneId: this.milestone.id,
+        assigneeId: this.assigneeId === -1 ? undefined : this.assigneeId,
+        labels: labels,
+      });
+
+      this.toastService.show(
+        Assertion.no(100),
+        'Issueが正常に作成されました',
+        'success',
+        3000
+      );
+
+      // ダイアログを閉じる
+      this.issueCreateDialogExpansionService.setExpandedMilestoneId(undefined);
+
+    } catch (error) {
+      console.error('Issue作成エラー:', error);
+      this.toastService.show(
+        Assertion.no(101),
+        'Issueの作成に失敗しました',
+        'error',
+        5000
+      );
+    } finally {
+      this.isSubmitting = false;
+    }
+  }
+
+  /**
+   * キャンセルボタンのクリック
+   */
+  onCancel(): void {
+    this.issueCreateDialogExpansionService.setExpandedMilestoneId(undefined);
+  }
+} 

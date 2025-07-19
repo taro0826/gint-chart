@@ -195,4 +195,47 @@ export class GitLabApiService {
         return convertedData;
       });
   }
+
+  /**
+   * 任意のGitLab APIエンドポイントにデータを送信し、アプリ用の型に変換して返すObservableを返す
+   * @note
+   * @template T APIから取得する生データの型
+   * @template S 変換後のアプリ用データ型
+   * @param projectId プロジェクトID
+   * @param endpoint プロジェクト配下のAPIエンドポイント（例: 'issues'）
+   * @param body 送信するJSONデータ
+   * @param mapFn APIのレスポンスTをアプリ用型Sに変換する関数
+   * @returns Observable<S> 変換後データを流すObservable
+   */
+  post<T, S>(
+    projectId: string,
+    endpoint: EndPoint,
+    body: Record<string, unknown> | null,
+    mapFn: (data: T) => S | null
+  ): Observable<S> {
+    if (isNull(this.urlChainBuilder)) {
+      return new Observable<S>((subscriber) => {
+        subscriber.error(new Error('GitLab host is not configured'));
+      });
+    }
+
+    return this.urlChainBuilder
+      .start()
+      .addPath('api')
+      .addPath('v4')
+      .addPath('projects')
+      .addPath(encodeURIComponent(projectId))
+      .addPath(endpoint)
+      .addMethod('POST')
+      .addPrivateToken(this.gitlabConfig.config.accessToken)
+      .addOption(body)
+      .end()
+      .pipe((data: T) => {
+        const convertedData = mapFn(data);
+        if (isNull(convertedData)) {
+          throw new Error('Failed to convert GitLab API response to Issue');
+        }
+        return convertedData;
+      });
+  }
 }
