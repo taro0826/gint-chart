@@ -24,12 +24,8 @@ export class IssueCreateDialogComponent implements OnInit {
   // フォームデータ
   title = '';
   description = '';
-  assigneeId = -1;
-  status = -1;
   category: number[] = [];
   resource: number[] = [];
-  startDate: string = '';
-  endDate: string = '';
 
   milestone: Milestone | undefined;
   project: Project | undefined;
@@ -72,28 +68,6 @@ export class IssueCreateDialogComponent implements OnInit {
   }
 
   /**
-   * ステータス名を取得
-   */
-  getStatusName(statusId: number | undefined): string {
-    if (isUndefined(statusId) || statusId === -1) {
-      return '未設定';
-    }
-    const statusLabel = this.labelStore.findStatusLabel(statusId);
-    return statusLabel ? statusLabel.name : '不明';
-  }
-
-  /**
-   * 担当者名を取得
-   */
-  getAssigneeName(assigneeId: number | undefined): string {
-    if (isUndefined(assigneeId) || assigneeId === -1) {
-      return '未設定';
-    }
-    const member = this.memberStore.findMemberById(assigneeId);
-    return member ? member.name : '不明';
-  }
-
-  /**
    * カテゴリラベルを取得
    */
   getCategoryLabels(): Label[] {
@@ -105,20 +79,6 @@ export class IssueCreateDialogComponent implements OnInit {
    */
   getResourceLabels(): Label[] {
     return this.labelStore.resourceLabels;
-  }
-
-  /**
-   * ステータスラベルを取得
-   */
-  getStatusLabels(): Label[] {
-    return this.labelStore.statusLabels;
-  }
-
-  /**
-   * メンバー一覧を取得
-   */
-  getMembers(): Member[] {
-    return this.memberStore.members;
   }
 
   /**
@@ -179,10 +139,6 @@ export class IssueCreateDialogComponent implements OnInit {
     return label.id;
   }
 
-  trackByMember(index: number, member: Member): number {
-    return member.id;
-  }
-
   /**
    * フォームのバリデーション
    */
@@ -204,14 +160,6 @@ export class IssueCreateDialogComponent implements OnInit {
       // ラベル配列を構築
       const labels: string[] = [];
       
-      // ステータスラベル
-      if (this.status !== -1) {
-        const statusLabel = this.labelStore.findStatusLabel(this.status);
-        if (statusLabel) {
-          labels.push(statusLabel.name);
-        }
-      }
-      
       // カテゴリラベル
       this.category.forEach((categoryId: number) => {
         const categoryLabel = this.labelStore.findCategoryLabel(categoryId);
@@ -228,21 +176,12 @@ export class IssueCreateDialogComponent implements OnInit {
         }
       });
 
-      // 日付情報をdescriptionに追加
-      let description = this.description || '';
-      if (this.startDate) {
-        description = `$$start-date:${this.startDate}$$\n${description}`;
-      }
-      if (this.endDate) {
-        description = `$$end-date:${this.endDate}$$\n${description}`;
-      }
-
       await this.issueCreateService.createIssue({
         projectId: this.project.id.toString(),
         title: this.title.trim(),
-        description: description,
+        description: this.description || '',
         milestoneId: this.milestone.id,
-        assigneeId: this.assigneeId === -1 ? undefined : this.assigneeId,
+        assigneeId: undefined,
         labels: labels,
       });
 

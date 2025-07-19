@@ -35,48 +35,6 @@
             placeholder="Issueの説明を入力してください"
           ></textarea>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="label">担当者</label>
-            <select [(ngModel)]="assigneeId" class="form-control">
-              <option [value]="-1">未設定</option>
-              <option *ngFor="let member of getMembers(); trackBy: trackByMember" [value]="member.id">
-                {{ member.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label class="label">ステータス</label>
-            <select [(ngModel)]="status" class="form-control">
-              <option [value]="-1">未設定</option>
-              <option *ngFor="let label of getStatusLabels(); trackBy: trackByLabel" [value]="label.id">
-                {{ label.name }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="label">開始日</label>
-            <input
-              type="date"
-              [(ngModel)]="startDate"
-              class="form-control"
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="label">終了日</label>
-            <input
-              type="date"
-              [(ngModel)]="endDate"
-              class="form-control"
-            />
-          </div>
-        </div>
       </section>
 
       <section class="issue-category">
