@@ -5,7 +5,7 @@ import { LabelStoreService } from '@src/app/store/label-store.service';
 import { MemberStoreService } from '@src/app/store/member-store.service';
 import { ProjectStoreService } from '@src/app/store/project-store.service';
 import { ProjectTreeStoreService } from '@src/app/store/project-tree-store.service';
-import { IssueCreateService } from './issue-create.service';
+import { IssueCreateService } from '../update/issue-create.service';
 import { ToastService } from '@src/app/utils/toast.service';
 import { isUndefined } from '@src/app/utils/utils';
 import { Milestone } from '@src/app/model/milestone.model';
