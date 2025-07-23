@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { finalize } from 'rxjs';
 import { IssueCreateDialogExpansionService } from '@src/app/issue-create-dialog/issue-create-dialog-expansion.service';
 import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
 import { LabelStoreService } from '@src/app/store/label-store.service';
@@ -149,63 +150,65 @@ export class IssueCreateDialogComponent implements OnInit {
   /**
    * フォームを送信
    */
-  async onSubmit(): Promise<void> {
+  onSubmit(): void {
     if (!this.isFormValid() || !this.milestone || !this.project) {
       return;
     }
 
     this.isSubmitting = true;
 
-    try {
-      // ラベル配列を構築
-      const labels: string[] = [];
-      
-      // カテゴリラベル
-      this.category.forEach((categoryId: number) => {
-        const categoryLabel = this.labelStore.findCategoryLabel(categoryId);
-        if (categoryLabel) {
-          labels.push(categoryLabel.name);
-        }
-      });
-      
-      // リソースラベル
-      this.resource.forEach((resourceId: number) => {
-        const resourceLabel = this.labelStore.findResourceLabel(resourceId);
-        if (resourceLabel) {
-          labels.push(resourceLabel.name);
-        }
-      });
+    // ラベル配列を構築
+    const labels: string[] = [];
+    
+    // カテゴリラベル
+    this.category.forEach((categoryId: number) => {
+      const categoryLabel = this.labelStore.findCategoryLabel(categoryId);
+      if (categoryLabel) {
+        labels.push(categoryLabel.name);
+      }
+    });
+    
+    // リソースラベル
+    this.resource.forEach((resourceId: number) => {
+      const resourceLabel = this.labelStore.findResourceLabel(resourceId);
+      if (resourceLabel) {
+        labels.push(resourceLabel.name);
+      }
+    });
 
-      await this.issueCreateService.createIssue({
-        projectId: this.project.id.toString(),
-        title: this.title.trim(),
-        description: this.description || '',
-        milestoneId: this.milestone.id,
-        assigneeId: undefined,
-        labels: labels,
-      });
+    this.issueCreateService.createIssue({
+      projectId: this.project.id.toString(),
+      title: this.title.trim(),
+      description: this.description || '',
+      milestoneId: this.milestone.id,
+      assigneeId: undefined,
+      labels: labels,
+    }).pipe(
+      finalize(() => {
+        this.isSubmitting = false;
+      })
+    ).subscribe({
+      next: () => {
+        this.toastService.show(
+          Assertion.no(100),
+          'Issueが正常に作成されました',
+          'success',
+          3000
+        );
 
-      this.toastService.show(
-        Assertion.no(100),
-        'Issueが正常に作成されました',
-        'success',
-        3000
-      );
-
-      // ダイアログを閉じる
-      this.issueCreateDialogExpansionService.setExpandedMilestoneId(undefined);
-
-    } catch (error) {
-      console.error('Issue作成エラー:', error);
-      this.toastService.show(
-        Assertion.no(101),
-        'Issueの作成に失敗しました',
-        'error',
-        5000
-      );
-    } finally {
-      this.isSubmitting = false;
-    }
+        // ダイアログを閉じる
+        this.issueCreateDialogExpansionService.setExpandedMilestoneId(undefined);
+      },
+      error: (error) => {
+        console.error('Issue作成エラー:', error);
+        this.toastService.show(
+          Assertion.no(101),
+          'Issueの作成に失敗しました',
+          'error',
+          5000
+        );
+      }
+    });
   }
 
   /**
