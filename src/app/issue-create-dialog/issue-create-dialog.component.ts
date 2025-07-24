@@ -14,6 +14,7 @@ import { Label } from '@src/app/model/label.model';
 import { Member } from '@src/app/model/member.model';
 import { Project } from '@src/app/model/project.model';
 import { Assertion } from '@src/app/utils/assertion';
+import { IssuesStoreService } from '../store/issues-store.service';
 
 @Component({
   selector: 'app-issue-create-dialog',
@@ -36,8 +37,7 @@ export class IssueCreateDialogComponent implements OnInit {
     private readonly issueCreateDialogExpansionService: IssueCreateDialogExpansionService,
     private readonly milestoneStore: MilestoneStoreService,
     private readonly labelStore: LabelStoreService,
-    private readonly memberStore: MemberStoreService,
-    private readonly projectStore: ProjectStoreService,
+    private readonly issuesStore: IssuesStoreService,
     private readonly projectTreeStore: ProjectTreeStoreService,
     private readonly issueCreateService: IssueCreateService,
     private readonly toastService: ToastService
@@ -188,7 +188,10 @@ export class IssueCreateDialogComponent implements OnInit {
         this.isSubmitting = false;
       })
     ).subscribe({
-      next: () => {
+      next: (newIssue) => {
+        if (newIssue) {
+          this.issuesStore.updateIssue(newIssue);
+        }
         this.toastService.show(
           Assertion.no(100),
           'Issueが正常に作成されました',
