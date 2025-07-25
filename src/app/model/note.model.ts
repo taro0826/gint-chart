@@ -76,16 +76,8 @@ export function convertJsonToNote(apiNote: GitLabApiNote): Note | null {
     id: apiNote.id,
     body: apiNote.body,
     author_id: apiNote.author.id,
-    author_name: apiNote.author.name,
-    author_username: apiNote.author.username,
-    author_avatar_url: apiNote.author.avatar_url,
     created_at,
     updated_at,
-    system: apiNote.system,
     issue_iid: apiNote.noteable_id, // GitLabのAPIではnoteable_idがissueのiidに対応
-    resolvable: apiNote.resolvable || false,
-    resolved: apiNote.resolved || false,
-    confidential: apiNote.confidential || false,
-    internal: apiNote.internal || false,
   };
 } 
