@@ -4,12 +4,15 @@ import { IssuesStoreService } from '@src/app/store/issues-store.service';
 import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
 import { LabelStoreService } from '@src/app/store/label-store.service';
 import { MemberStoreService } from '@src/app/store/member-store.service';
+import { GitLabApiService } from '@src/app/git-lab-api/git-lab-api.service';
 import { isUndefined } from '@src/app/utils/utils';
 import { Issue } from '@src/app/model/issue.model';
 import { Milestone } from '@src/app/model/milestone.model';
 import { Label } from '@src/app/model/label.model';
 import { Member } from '@src/app/model/member.model';
+import { Note } from '@src/app/model/note.model';
 import { Assertion } from '@src/app/utils/assertion';
+import { catchError, of } from 'rxjs';
 
 interface ChatMessage {
   id: number;
@@ -34,13 +37,15 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
   private shouldScrollToBottom = false;
+  isLoadingMessages = false;
 
   constructor(
     private readonly issueDetailDialogExpansionService: IssueDetailDialogExpansionService,
     private readonly issueStore: IssuesStoreService,
     private readonly milestoneStore: MilestoneStoreService,
     private readonly labelStore: LabelStoreService,
-    private readonly memberStore: MemberStoreService
+    private readonly memberStore: MemberStoreService,
+    private readonly gitlabApi: GitLabApiService
   ) {}
 
   ngOnInit(): void {
@@ -60,7 +65,7 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
       );
     }
 
-    // サンプルメッセージを追加（後でAPIから取得するように変更）
+    // サーバーからチャットメッセージを取得
     this.loadChatMessages();
   }
 
@@ -72,22 +77,68 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * チャットメッセージを読み込む
+   * NoteをChatMessageに変換
+   */
+  private convertNoteToMessage(note: Note): ChatMessage {
+    const author = this.memberStore.findMemberById(note.author_id);
+    return {
+      id: note.id,
+      author: author ? author.name : '不明なユーザー',
+      content: note.body,
+      timestamp: note.created_at,
+    };
+  }
+
+  /**
+   * サーバーからチャットメッセージを読み込む
    */
   private loadChatMessages(): void {
-    // TODO: 実際のAPIからメッセージを取得
+    if (!this.issue) {
+      return;
+    }
+
+    this.isLoadingMessages = true;
+
+    // GitLab APIからNotesを取得
+    this.gitlabApi.fetchIssueNotes(
+      String(this.issue.project_id),
+      this.issue.iid,
+      0, // 最初のページ
+      'asc' // 古い順にソート
+    ).pipe(
+      catchError((error) => {
+        console.error('チャットメッセージの取得に失敗しました:', error);
+        // エラー時はサンプルデータを表示
+        return of({
+          hasNextPage: false,
+          data: []
+        });
+      })
+    ).subscribe({
+      next: (result) => {
+        this.chatMessages = result.data.map(note => this.convertNoteToMessage(note));
+        this.isLoadingMessages = false;
+        this.shouldScrollToBottom = true;
+      },
+      error: (error) => {
+        console.error('チャットメッセージの処理中にエラーが発生しました:', error);
+        this.isLoadingMessages = false;
+        // エラー時はサンプルメッセージを表示
+        this.loadSampleMessages();
+      }
+    });
+  }
+
+  /**
+   * サンプルメッセージを読み込む（エラー時のフォールバック）
+   */
+  private loadSampleMessages(): void {
     this.chatMessages = [
       {
         id: 1,
-        author: '山田太郎',
-        content: 'この問題について調査しました。',
-        timestamp: new Date('2024-01-15T10:30:00'),
-      },
-      {
-        id: 2,
-        author: '佐藤花子',
-        content: 'ありがとうございます。どのような結果でしたか？',
-        timestamp: new Date('2024-01-15T11:15:00'),
+        author: 'サンプルユーザー',
+        content: 'サーバーからのデータ取得に失敗しました。サンプルメッセージを表示中です。',
+        timestamp: new Date(),
       },
     ];
   }
@@ -101,7 +152,7 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
     }
 
     const newMessage: ChatMessage = {
-      id: this.chatMessages.length + 1,
+      id: Date.now(), // 一時的なID
       author: '現在のユーザー', // TODO: 実際のユーザー名を取得
       content: this.newMessage.trim(),
       timestamp: new Date(),
@@ -111,7 +162,7 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
     this.newMessage = '';
     this.shouldScrollToBottom = true;
 
-    // TODO: APIにメッセージを送信
+    // TODO: GitLab APIに新しいNoteを送信
   }
 
   /**
