@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppComponent } from '@src/app/app.component';
 import { ChartAreaComponent } from '@src/app/chart-area/chart-area.component';
@@ -49,6 +50,7 @@ import { ButtonComponent } from './design/button/button.component';
     DragDropModule,
     MatIconModule,
     MatCheckboxModule,
+    MatButtonModule,
     SwitchToggleComponent,
     ButtonComponent,
     IssueIidPipe,

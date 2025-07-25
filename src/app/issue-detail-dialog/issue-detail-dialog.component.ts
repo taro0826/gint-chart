@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { IssueDetailDialogExpansionService } from '@src/app/issue-detail-dialog/issue-detail-dialog-expansion.service';
 import { IssuesStoreService } from '@src/app/store/issues-store.service';
 import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
@@ -11,15 +11,29 @@ import { Label } from '@src/app/model/label.model';
 import { Member } from '@src/app/model/member.model';
 import { Assertion } from '@src/app/utils/assertion';
 
+interface ChatMessage {
+  id: number;
+  author: string;
+  content: string;
+  timestamp: Date;
+}
+
 @Component({
   selector: 'app-issue-detail-dialog',
   standalone: false,
   templateUrl: './issue-detail-dialog.component.html',
   styleUrl: './issue-detail-dialog.component.scss',
 })
-export class IssueDetailDialogComponent implements OnInit {
+export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
+  @ViewChild('chatMessagesContainer') chatMessagesElement?: ElementRef<HTMLDivElement>;
+
   issue: Issue | undefined;
   milestone: Milestone | undefined;
+  
+  // チャット機能のプロパティ
+  chatMessages: ChatMessage[] = [];
+  newMessage: string = '';
+  private shouldScrollToBottom = false;
 
   constructor(
     private readonly issueDetailDialogExpansionService: IssueDetailDialogExpansionService,
@@ -45,6 +59,86 @@ export class IssueDetailDialogComponent implements OnInit {
         (milestone) => milestone.id === this.issue!.milestone_id
       );
     }
+
+    // サンプルメッセージを追加（後でAPIから取得するように変更）
+    this.loadChatMessages();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
+
+  /**
+   * チャットメッセージを読み込む
+   */
+  private loadChatMessages(): void {
+    // TODO: 実際のAPIからメッセージを取得
+    this.chatMessages = [
+      {
+        id: 1,
+        author: '山田太郎',
+        content: 'この問題について調査しました。',
+        timestamp: new Date('2024-01-15T10:30:00'),
+      },
+      {
+        id: 2,
+        author: '佐藤花子',
+        content: 'ありがとうございます。どのような結果でしたか？',
+        timestamp: new Date('2024-01-15T11:15:00'),
+      },
+    ];
+  }
+
+  /**
+   * メッセージを送信
+   */
+  sendMessage(): void {
+    if (!this.newMessage?.trim()) {
+      return;
+    }
+
+    const newMessage: ChatMessage = {
+      id: this.chatMessages.length + 1,
+      author: '現在のユーザー', // TODO: 実際のユーザー名を取得
+      content: this.newMessage.trim(),
+      timestamp: new Date(),
+    };
+
+    this.chatMessages.push(newMessage);
+    this.newMessage = '';
+    this.shouldScrollToBottom = true;
+
+    // TODO: APIにメッセージを送信
+  }
+
+  /**
+   * メッセージ入力時のキーボードイベント処理
+   */
+  onMessageInputKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+
+  /**
+   * チャットエリアを最下部にスクロール
+   */
+  private scrollToBottom(): void {
+    if (this.chatMessagesElement) {
+      const element = this.chatMessagesElement.nativeElement;
+      element.scrollTop = element.scrollHeight;
+    }
+  }
+
+  /**
+   * ngForのパフォーマンス最適化のためのtrackBy関数（メッセージ用）
+   */
+  trackByMessage(index: number, message: ChatMessage): number {
+    return message.id;
   }
 
   /**
