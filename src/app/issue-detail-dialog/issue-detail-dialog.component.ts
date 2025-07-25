@@ -165,15 +165,7 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
     // TODO: GitLab APIに新しいNoteを送信
   }
 
-  /**
-   * メッセージ入力時のキーボードイベント処理
-   */
-  onMessageInputKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendMessage();
-    }
-  }
+
 
   /**
    * チャットエリアを最下部にスクロール
