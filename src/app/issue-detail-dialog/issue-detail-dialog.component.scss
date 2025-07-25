@@ -335,7 +335,40 @@ $border-radius-xl: 8px;
             flex-shrink: 0;
             height: 36px;
             font-size: 13px;
-            font-weight: 500;
+            font-weight: 600;
+            min-width: 80px;
+            background: var(--accent-color) !important;
+            color: white !important;
+            border: 2px solid var(--accent-color) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.2s ease !important;
+
+            &:hover:not(:disabled) {
+              background: var(--accent-color) !important;
+              border-color: var(--accent-color) !important;
+              box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+              transform: translateY(-1px);
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(0);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            }
+
+            &:disabled {
+              background: var(--background-tertiary) !important;
+              color: var(--text-muted) !important;
+              border-color: var(--border-color) !important;
+              box-shadow: none !important;
+              cursor: not-allowed;
+              transform: none;
+            }
+
+            &:focus {
+              outline: none !important;
+              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+            }
           }
         }
       }
