@@ -474,11 +474,11 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private async THIS_IS_TEST(): Promise<void> {
-    const url = "https://chat.googleapis.com/v1/spaces/SPACE_ID/messages" /** ここにWebhookのURLを入れる */
+    const url = "https://chat.googleapis.com/v1/spaces/XXXXXXXXXXXXXXXXXXXXX/messages?key=XXXXXXXXXXXXXXXXXXXXX&tokenXXXXXXXXXXXXXXXXXXXXX" /** ここにWebhookのURLを入れる */
     const res = await fetch(url, {
         method: "POST",
         headers: {"Content-Type": "application/json; charset=UTF-8"},
-        body: JSON.stringify({text: "Hello from a Node script!"})
+        body: JSON.stringify({text: "<users/XXXXXXXXXXXXXXXXXXXXX>"})
       });
     const resJson = await res.json();
     console.log(resJson);
