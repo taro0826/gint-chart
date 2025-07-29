@@ -48,9 +48,20 @@ mada
 
 ## GitLab 連携方法
 
-アプリをダウンロードしたら、.exe ファイルと同じ階層に「gitlab.config.json」を作成してください。
+アプリをダウンロードしたら、.exe ファイルの上位の改装にgint-chart-configフォルダを作成します。
 
-json 中身の例
+```
+gint-chart
+├　・・・
+├　Gint-Chart
+└　・・・
+gint-chart-config
+```
+
+その中に「gitlab.config.json」を作成してください。
+
+json 中身は以下のようにしてください。
+
 
 ```
 {

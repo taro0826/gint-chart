@@ -1,7 +1,7 @@
 {
   "name": "gint-chart",
   "productName": "Gint-Chart",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "GitLabプロジェクト連携のタスク管理支援アプリ",
   "author": "seanayuuto",
   "main": "main.js",
