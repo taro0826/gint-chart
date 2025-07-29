@@ -101,6 +101,12 @@ $issue-row-margin-left: 5px;
   border-bottom-left-radius: var(--border-radius-sm);
   margin-left: $issue-row-margin-left;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--background-secondary);
+  }
 
   .milestone-header {
     display: flex;

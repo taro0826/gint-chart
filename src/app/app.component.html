@@ -106,6 +106,22 @@
 </div>
 
 <!--
+** Issue Create Dialog Overlay
+- 新規Issue作成ダイアログを表示するオーバーレイ
+- ダイアログの外側をクリックするとダイアログを閉じる
+ -->
+<div
+  *ngIf="isIssueCreateDialogExpanded"
+  class="issue-create-dialog-overlay"
+  [class.closing]="isIssueCreateDialogClosing"
+  (click)="onIssueCreateDialogOverlayClick($event)"
+>
+  <div class="issue-create-dialog dialog-slide-in-animation">
+    <app-issue-create-dialog></app-issue-create-dialog>
+  </div>
+</div>
+
+<!--
 ** Toast
 - 通信成否などを右下に表示するポップアップのこと
  -->

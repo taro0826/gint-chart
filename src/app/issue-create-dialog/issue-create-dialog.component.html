@@ -1,0 +1,101 @@
+<div class="issue-create-dialog">
+  <div class="issue-content">
+    <div class="title-section">
+      <h2 class="issue-title">新しいIssueを作成</h2>
+      <div class="milestone-info">
+        <span class="milestone-label">マイルストーン</span>
+        <span class="milestone-name">{{ milestone?.title || '未選択' }}</span>
+      </div>
+    </div>
+
+    <div class="issue-form">
+      <div class="form-content">
+        <div class="issue-meta">
+          <div class="form-group">
+            <label class="label">タイトル *</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="title"
+              placeholder="Issueのタイトルを入力してください"
+              [class.invalid]="!isFormValid()"
+            />
+            <div class="error-message" *ngIf="!isFormValid()">
+              タイトルは必須で、1文字以上入力してください
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="label">説明</label>
+            <textarea
+              class="form-control"
+              [(ngModel)]="description"
+              placeholder="Issueの詳細な説明を入力してください"
+              rows="4"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="issue-category">
+          <label class="label">カテゴリ</label>
+          <div class="label-tags">
+            <span
+              *ngFor="let label of getCategoryLabels(); trackBy: trackByLabel"
+              class="label-tag category-tag"
+              [class.selected]="isLabelSelected(label.id, 'category')"
+              [style.background-color]="isLabelSelected(label.id, 'category') ? label.color : 'transparent'"
+              [style.color]="isLabelSelected(label.id, 'category') ? getContrastColor(label.color) : 'inherit'"
+              [style.border-color]="label.color"
+              (click)="toggleCategoryLabel(label.id)"
+            >
+              {{ label.name }}
+            </span>
+            <span *ngIf="getCategoryLabels().length === 0" class="no-labels">
+              カテゴリラベルがありません
+            </span>
+          </div>
+        </div>
+
+        <div class="issue-resource">
+          <label class="label">リソース</label>
+          <div class="label-tags">
+            <span
+              *ngFor="let label of getResourceLabels(); trackBy: trackByLabel"
+              class="label-tag resource-tag"
+              [class.selected]="isLabelSelected(label.id, 'resource')"
+              [style.background-color]="isLabelSelected(label.id, 'resource') ? label.color : 'transparent'"
+              [style.color]="isLabelSelected(label.id, 'resource') ? getContrastColor(label.color) : 'inherit'"
+              [style.border-color]="label.color"
+              (click)="toggleResourceLabel(label.id)"
+            >
+              {{ label.name }}
+            </span>
+            <span *ngIf="getResourceLabels().length === 0" class="no-labels">
+              リソースラベルがありません
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="onCancel()"
+          [disabled]="isSubmitting"
+        >
+          キャンセル
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!isFormValid() || isSubmitting"
+          (click)="onSubmit()"
+        >
+          <span *ngIf="isSubmitting">作成中...</span>
+          <span *ngIf="!isSubmitting">作成</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div> 

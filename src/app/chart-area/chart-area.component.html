@@ -46,13 +46,14 @@
       </div>
 
       <!-- マイルストーン行 -->
-      <div *ngIf="item.type === 'milestone'" class="milestone-header">
+      <div *ngIf="item.type === 'milestone'" class="milestone-header" (click)="onMilestoneClick(item.data)">
         <div class="toggle-wrapper">
           <app-switch-toggle
             [checked]="!isItemCollapsed(item)"
             [disabled]="getChildCount(item) === 0"
             [title]="isItemCollapsed(item) ? '展開' : '折り畳み'"
             (checkedChange)="onToggleCollapse(item)"
+            (click)="$event.stopPropagation()"
           ></app-switch-toggle>
           <span class="child-count" *ngIf="getChildCount(item) > 0"
             >({{ getChildCount(item) }})</span

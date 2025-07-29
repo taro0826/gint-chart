@@ -25,6 +25,7 @@ import { ViewSettingsDialogExpansionService } from './view-settings-dialog/view-
 import { FilterSettingsDialogExpansionService } from './filter-settings-dialog/filter-settings-dialog-expansion.service';
 import { ViewService } from './service/view.service';
 import { PollingService } from './utils/polling.service';
+import { IssueCreateDialogExpansionService } from './issue-create-dialog/issue-create-dialog-expansion.service';
 
 const POLLING_INTERVAL = 10 * 60 * 1000; // 10分間隔
 
@@ -42,12 +43,14 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   isAssigneeSelectorDialogExpanded = false;
   isViewSettingsDialogExpanded = false;
   isFilterSettingsDialogExpanded = false;
+  isIssueCreateDialogExpanded = false;
   isDialogClosing = false;
   isToastHistoryDialogClosing = false;
   isStatusSelectorDialogClosing = false;
   isAssigneeSelectorDialogClosing = false;
   isViewSettingsDialogClosing = false;
   isFilterSettingsDialogClosing = false;
+  isIssueCreateDialogClosing = false;
   private destroy$ = new Subject<void>();
 
   /**
@@ -75,7 +78,8 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     private readonly viewSettingsDialogExpansionService: ViewSettingsDialogExpansionService,
     private readonly filterSettingsDialogExpansionService: FilterSettingsDialogExpansionService,
     private readonly viewService: ViewService,
-    private readonly pollingService: PollingService
+    private readonly pollingService: PollingService,
+    private readonly issueCreateDialogExpansionService: IssueCreateDialogExpansionService
   ) {}
 
   ngOnInit() {
@@ -166,6 +170,21 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
             Assertion.no(45)
           );
           this.isFilterSettingsDialogExpanded = false;
+        },
+      });
+
+    this.issueCreateDialogExpansionService.expandedMilestoneId$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (milestoneId: number | undefined) => {
+          this.isIssueCreateDialogExpanded = !isUndefined(milestoneId);
+        },
+        error: (error) => {
+          Assertion.assert(
+            'Issue create dialog expansion error: ' + error,
+            Assertion.no(46)
+          );
+          this.isIssueCreateDialogExpanded = false;
         },
       });
 
@@ -460,6 +479,21 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
       setTimeout(() => {
         this.filterSettingsDialogExpansionService.collapse();
         this.isFilterSettingsDialogClosing = false;
+      }, DIALOG_ANIMATION_DURATION);
+    }
+  }
+
+  /**
+   * 新規Issue作成ダイアログのオーバーレイクリック
+   */
+  onIssueCreateDialogOverlayClick(event: MouseEvent): void {
+    // クリックされた要素がオーバーレイ自体の場合のみダイアログを閉じる
+    if (event.target === event.currentTarget) {
+      this.isIssueCreateDialogClosing = true;
+      // アニメーション完了後にダイアログを閉じる
+      setTimeout(() => {
+        this.issueCreateDialogExpansionService.setExpandedMilestoneId(undefined);
+        this.isIssueCreateDialogClosing = false;
       }, DIALOG_ANIMATION_DURATION);
     }
   }

@@ -22,6 +22,7 @@ import { IssueAssigneeNamePipe } from '@src/app/chart-area/issue-row/issue-assig
 import { SideActionPanelComponent } from '@src/app/side-action-panel/side-action-panel.component';
 import { ViewSettingsDialogComponent } from '@src/app/view-settings-dialog/view-settings-dialog.component';
 import { FilterSettingsDialogComponent } from '@src/app/filter-settings-dialog/filter-settings-dialog.component';
+import { IssueCreateDialogComponent } from '@src/app/issue-create-dialog/issue-create-dialog.component';
 import { ButtonComponent } from './design/button/button.component';
 
 @NgModule({
@@ -38,6 +39,7 @@ import { ButtonComponent } from './design/button/button.component';
     SideActionPanelComponent,
     ViewSettingsDialogComponent,
     FilterSettingsDialogComponent,
+    IssueCreateDialogComponent,
   ],
   imports: [
     BrowserModule,

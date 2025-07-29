@@ -115,4 +115,8 @@ export class MemberStoreService {
   get membersId(): number[] {
     return this.membersSubject.getValue().map(item => item.id);
   }
+
+  get members(): Member[] {
+    return this.membersSubject.getValue();
+  }
 }
