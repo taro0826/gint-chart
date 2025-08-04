@@ -36,7 +36,7 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
   
   // チャット機能のプロパティ
   chatMessages: ChatMessage[] = [];
-  newMessage: string = '';
+  newMessage = '';
   private shouldScrollToBottom = false;
   isLoadingMessages = false;
 
@@ -336,22 +336,63 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
    * メッセージを送信
    */
   sendMessage(): void {
-    if (!this.newMessage?.trim()) {
+    if (isDebug) {
+      this.chatMessages.push({
+        id: this.chatMessages.length + 1,
+        author: 'デバッグユーザー',
+        content: this.newMessage + ' (デバッグモード)',
+        timestamp: new Date(),
+      })
+      this.shouldScrollToBottom = true;
       return;
     }
 
-    const newMessage: ChatMessage = {
-      id: Date.now(), // 一時的なID
-      author: '現在のユーザー', // TODO: 実際のユーザー名を取得
-      content: this.newMessage.trim(),
-      timestamp: new Date(),
-    };
+    if (this.newMessage.trim() === '') {
+      return;
+    }
 
-    this.chatMessages.push(newMessage);
+    if (isUndefined(this.issue)) {
+      this.toastService.show(
+        Assertion.no(105),
+        'イシュー情報が取得できていません。',
+        'error',
+        4000
+      );
+      return;
+    }
+
+    const messageBody = this.newMessage.trim();
     this.newMessage = '';
     this.shouldScrollToBottom = true;
 
-    // TODO: GitLab APIに新しいNoteを送信
+    // GitLab APIに新しいNoteを送信
+    this.gitlabApi.postIssueNote(String(this.issue.project_id), this.issue.iid, messageBody)
+      .pipe(
+        catchError((error) => {
+          this.toastService.show(
+            Assertion.no(106),
+            'コメントの送信に失敗しました: ' + (error?.message || error),
+            'error',
+            5000
+          );
+          throw error;
+        })
+      )
+      .subscribe({
+        next: (note) => {
+          this.toastService.show(
+            Assertion.no(107),
+            'コメントを送信しました',
+            'success',
+            2500
+          );
+          // 送信後、最新のコメントを再取得
+          this.loadChatMessages();
+        },
+        error: () => {
+          // catchErrorで通知済み
+        }
+      });
   }
 
 
