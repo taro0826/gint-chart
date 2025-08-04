@@ -1,0 +1,273 @@
+.issue-create-dialog {
+  height: 100%;
+  width: 100%;
+  background: var(--background-primary);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 0 auto;
+  border: 1px solid var(--border-color);
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+
+  .issue-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+
+    .title-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+
+      .issue-title {
+        color: var(--text-primary);
+        font-size: 18pt;
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .milestone-info {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+
+        .milestone-label {
+          color: var(--text-secondary);
+          font-size: 10pt;
+          font-weight: 500;
+        }
+
+        .milestone-name {
+          color: var(--text-primary);
+          font-size: 11pt;
+          font-weight: 600;
+          background-color: var(--background-secondary);
+          padding: 4px 8px;
+          border-radius: var(--border-radius-sm);
+          border: 1px solid var(--border-color);
+        }
+      }
+    }
+
+    .issue-form {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+      max-height: 600px;
+
+      .form-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+
+        .issue-meta {
+          margin-bottom: 24px;
+
+          .form-group {
+            margin-bottom: 16px;
+
+            .label {
+              display: block;
+              color: var(--text-primary);
+              font-size: 11pt;
+              font-weight: 600;
+              margin-bottom: 6px;
+            }
+
+            .form-control {
+              width: 100%;
+              padding: 8px 12px;
+              border: 1px solid var(--border-color);
+              border-radius: var(--border-radius-sm);
+              background-color: var(--background-secondary);
+              color: var(--text-primary);
+              font-size: 11pt;
+              transition: border-color 0.2s ease;
+
+              &:focus {
+                outline: none;
+                border-color: var(--primary-color);
+                box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+              }
+
+              &.invalid {
+                border-color: var(--error-color);
+              }
+
+              &::placeholder {
+                color: var(--text-tertiary);
+              }
+            }
+
+            textarea.form-control {
+              resize: none;
+              height: 200px;
+            }
+
+            .error-message {
+              color: var(--error-color);
+              font-size: 9pt;
+              margin-top: 4px;
+            }
+          }
+
+          .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+        }
+
+        .issue-category,
+        .issue-resource {
+          margin-bottom: 20px;
+
+          .label {
+            display: block;
+            color: var(--text-primary);
+            font-size: 11pt;
+            font-weight: 600;
+            margin-bottom: 8px;
+          }
+
+          .label-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            .label-tag {
+              display: inline-block;
+              padding: 4px 8px;
+              border-radius: var(--border-radius-sm);
+              font-size: 9pt;
+              font-weight: 500;
+              cursor: pointer;
+              border: 1px solid;
+              transition: all 0.2s ease;
+
+              &:hover {
+                opacity: 0.8;
+              }
+
+              &.selected {
+                font-weight: 600;
+              }
+
+              &.category-tag {
+                border-color: var(--border-color);
+              }
+
+              &.resource-tag {
+                border-color: var(--border-color);
+              }
+            }
+
+            .no-labels {
+              color: var(--text-tertiary);
+              font-size: 9pt;
+              font-style: italic;
+            }
+          }
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-color);
+        flex-shrink: 0;
+
+        .btn {
+          padding: 8px 16px;
+          border-radius: var(--border-radius-sm);
+          font-size: 11pt;
+          font-weight: 500;
+          cursor: pointer;
+          border: 1px solid;
+          transition: all 0.2s ease;
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+
+          &.btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+
+            &:hover:not(:disabled) {
+              background-color: var(--primary-color-dark);
+              border-color: var(--primary-color-dark);
+            }
+          }
+
+          &.btn-secondary {
+            background-color: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-color);
+
+            &:hover:not(:disabled) {
+              background-color: var(--background-secondary);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// レスポンシブ対応
+@media (max-width: 768px) {
+  .issue-create-dialog {
+    padding: 16px;
+    max-width: 100%;
+    margin: 16px;
+
+    .issue-content {
+      .title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+
+        .milestone-info {
+          align-items: flex-start;
+        }
+      }
+
+      .issue-form {
+        min-height: 400px;
+        max-height: 500px;
+
+        .form-content {
+          .issue-meta {
+            .form-row {
+              grid-template-columns: 1fr;
+              gap: 12px;
+            }
+          }
+        }
+
+        .form-actions {
+          flex-direction: column-reverse;
+
+          .btn {
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+} 

@@ -70,7 +70,11 @@ export class IssuesStoreService {
       (issue) => issue.id === updatedIssue.id
     );
 
-    if (index !== -1) {
+
+    if (index === -1) {
+      const newIssues = [...currentIssues, updatedIssue];
+      this.issuesSubject.next(newIssues);
+    } else {
       // 新しい配列を作成して更新されたissueを配置
       const newIssues = [...currentIssues];
       newIssues[index] = updatedIssue;
