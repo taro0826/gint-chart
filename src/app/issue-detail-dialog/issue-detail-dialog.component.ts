@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, AfterViewInit } from '@angular/core';
 import { IssueDetailDialogExpansionService } from '@src/app/issue-detail-dialog/issue-detail-dialog-expansion.service';
 import { IssuesStoreService } from '@src/app/store/issues-store.service';
 import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
@@ -28,7 +28,7 @@ interface ChatMessage {
   templateUrl: './issue-detail-dialog.component.html',
   styleUrl: './issue-detail-dialog.component.scss',
 })
-export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewChecked, AfterViewInit {
   @ViewChild('chatMessagesContainer') chatMessagesElement?: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') messageInputElement?: ElementRef<HTMLTextAreaElement>;
 
@@ -89,6 +89,10 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
   ngOnDestroy(): void {
     // コメントのポーリングを停止
     this.stopCommentPolling();
+  }
+
+  ngAfterViewInit(): void {
+    this.onMessageInput();
   }
 
   /**
