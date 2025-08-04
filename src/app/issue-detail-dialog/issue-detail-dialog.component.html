@@ -150,19 +150,19 @@
         </div>
         
         <div class="chat-input-area">
-          <div class="input-container">
-            <textarea
-              #messageInput
-              [(ngModel)]="newMessage"
-              class="message-input"
-              placeholder="コメントを入力..."
-              rows="3"
-            ></textarea>
+          <textarea
+            #messageInput
+            [(ngModel)]="newMessage"
+            class="message-input"
+            placeholder="コメントを入力..."
+            rows="3"
+          ></textarea>
+          <div class="button-container">
             <button
               mat-raised-button
               color="primary"
               class="send-button"
-              [disabled]="!newMessage?.trim()"
+              [disabled]="!newMessage.trim()"
               (click)="sendMessage()"
             >
               送信
