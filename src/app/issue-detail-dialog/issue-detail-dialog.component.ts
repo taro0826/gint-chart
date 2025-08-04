@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { IssueDetailDialogExpansionService } from '@src/app/issue-detail-dialog/issue-detail-dialog-expansion.service';
 import { IssuesStoreService } from '@src/app/store/issues-store.service';
 import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
@@ -6,7 +6,7 @@ import { LabelStoreService } from '@src/app/store/label-store.service';
 import { MemberStoreService } from '@src/app/store/member-store.service';
 import { GitLabApiService } from '@src/app/git-lab-api/git-lab-api.service';
 import { ToastService } from '@src/app/utils/toast.service';
-import { isUndefined } from '@src/app/utils/utils';
+import { isUndefined, isNull } from '@src/app/utils/utils';
 import { Issue } from '@src/app/model/issue.model';
 import { Milestone } from '@src/app/model/milestone.model';
 import { Label } from '@src/app/model/label.model';
@@ -28,7 +28,7 @@ interface ChatMessage {
   templateUrl: './issue-detail-dialog.component.html',
   styleUrl: './issue-detail-dialog.component.scss',
 })
-export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
+export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('chatMessagesContainer') chatMessagesElement?: ElementRef<HTMLDivElement>;
 
   issue: Issue | undefined;
@@ -39,6 +39,10 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
   newMessage: string = '';
   private shouldScrollToBottom = false;
   isLoadingMessages = false;
+
+  // ポーリング機能のプロパティ
+  private commentPollingIntervalId: number | null = null;
+  private readonly COMMENT_POLLING_INTERVAL = 60 * 1000; // 60秒間隔
 
   constructor(
     private readonly issueDetailDialogExpansionService: IssueDetailDialogExpansionService,
@@ -69,6 +73,9 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
 
     // サーバーからチャットメッセージを取得
     this.loadChatMessages();
+
+    // コメントのポーリングを開始
+    this.startCommentPolling();
   }
 
   ngAfterViewChecked(): void {
@@ -76,6 +83,11 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
       this.scrollToBottom();
       this.shouldScrollToBottom = false;
     }
+  }
+
+  ngOnDestroy(): void {
+    // コメントのポーリングを停止
+    this.stopCommentPolling();
   }
 
   /**
@@ -120,7 +132,6 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
       'asc' // 古い順にソート
     ).pipe(
       catchError((error) => {
-        console.error(`チャットメッセージの取得に失敗しました (ページ ${page}):`, error);
         
         // API通信エラーのトーストを表示
         this.toastService.show(
@@ -190,6 +201,127 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
         timestamp: new Date(),
       },
     ];
+  }
+
+  /**
+   * コメントのポーリングを開始
+   */
+  private startCommentPolling(): void {
+    if (!isNull(this.commentPollingIntervalId)) {
+      return; // 既にポーリング中
+    }
+
+    this.commentPollingIntervalId = window.setInterval(() => {
+      // ポーリング中は自動更新（ローディング表示なし、新しいコメント・エラー時はトースト通知）
+      this.loadChatMessagesQuietly();
+    }, this.COMMENT_POLLING_INTERVAL);
+  }
+
+  /**
+   * コメントのポーリングを停止
+   */
+  private stopCommentPolling(): void {
+    if (isNull(this.commentPollingIntervalId)) {
+      return;
+    }
+    window.clearInterval(this.commentPollingIntervalId);
+    this.commentPollingIntervalId = null;
+  }
+
+  /**
+   * サーバーからチャットメッセージを自動更新で読み込む（ポーリング用）
+   * ローディング表示は行わず、新しいコメントがある場合とエラー時にトースト通知
+   */
+  private loadChatMessagesQuietly(): void {
+    if (!this.issue) {
+      return;
+    }
+
+    // 既存のメッセージ数を保存
+    const previousMessageCount = this.chatMessages.length;
+
+    // 一時的にメッセージをクリア
+    const tempMessages: ChatMessage[] = [];
+
+    // 全ページからNotesを再帰的に取得（自動更新）
+    this.loadAllNotesRecursivelyQuietly(String(this.issue.project_id), this.issue.iid, 0, tempMessages, previousMessageCount);
+  }
+
+  /**
+   * 全ページのNotesを再帰的に取得する（ポーリング用）
+   * @param projectId プロジェクトID
+   * @param issueIid IssueのIID
+   * @param page 現在のページ番号
+   * @param tempMessages 一時的なメッセージ配列
+   * @param previousMessageCount 以前のメッセージ数
+   */
+  private loadAllNotesRecursivelyQuietly(
+    projectId: string, 
+    issueIid: number, 
+    page: number, 
+    tempMessages: ChatMessage[], 
+    previousMessageCount: number
+  ): void {
+    this.gitlabApi.fetchIssueNotes(
+      projectId,
+      issueIid,
+      page,
+      'asc' // 古い順にソート
+    ).pipe(
+      catchError((error) => {
+        
+        // API通信エラーのトーストを表示
+        this.toastService.show(
+          Assertion.no(103),
+          `コメント自動更新でネットワークエラーが発生しました (ページ ${page})`,
+          'error',
+          5000
+        );
+        
+        // エラー時は空のデータを返す
+        return of({
+          hasNextPage: false,
+          data: []
+        });
+      })
+    ).subscribe({
+      next: (result) => {
+        // 現在のページのメッセージを追加
+        const newMessages = result.data.map(note => this.convertNoteToMessage(note));
+        tempMessages.push(...newMessages);
+
+        // 次のページがある場合は再帰的に取得
+        if (result.hasNextPage) {
+          this.loadAllNotesRecursivelyQuietly(projectId, issueIid, page + 1, tempMessages, previousMessageCount);
+        } else {
+          // 全ページの取得が完了
+          // 新しいメッセージがある場合のみ更新
+          if (tempMessages.length > previousMessageCount) {
+            const newMessageCount = tempMessages.length - previousMessageCount;
+            this.chatMessages = tempMessages;
+            this.shouldScrollToBottom = true;
+            
+            // 新しいコメントが追加されたことをトーストで通知
+            this.toastService.show(
+              Assertion.no(102),
+              `新しいコメントが${newMessageCount}件追加されました`,
+              'info',
+              3000
+            );
+          }
+        }
+      },
+      error: (error) => {
+        
+        // データ処理エラーのトーストを表示
+        this.toastService.show(
+          Assertion.no(104),
+          `コメント自動更新の処理でエラーが発生しました (ページ ${page})`,
+          'error',
+          5000
+        );
+      }
+    });
   }
 
   /**
