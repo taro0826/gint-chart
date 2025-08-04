@@ -397,14 +397,15 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
   }
 
   onMessageInput(): void {
-    const textarea = this.messageInputElement?.nativeElement;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      const maxHeight = 400;
-      const newHeight = Math.min(textarea.scrollHeight, maxHeight);
-      textarea.style.height = newHeight + 'px';
-      textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+    if (isUndefined(this.messageInputElement)) {
+      return;
     }
+    const textarea = this.messageInputElement.nativeElement;
+    textarea.style.height = 'auto';
+    const maxHeight = 400;
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = newHeight + 'px';
+    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
   }
 
 
