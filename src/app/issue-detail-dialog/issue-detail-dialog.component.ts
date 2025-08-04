@@ -39,6 +39,8 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
   chatMessages: ChatMessage[] = [];
   newMessage = '';
   private shouldScrollToBottom = false;
+  private shouldResetTextarea = false;
+  private initialTextareaHeight: string = '';
   isLoadingMessages = false;
 
   // ポーリング機能のプロパティ
@@ -84,6 +86,11 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
       this.scrollToBottom();
       this.shouldScrollToBottom = false;
     }
+    
+    if (this.shouldResetTextarea) {
+      this.performTextareaReset();
+      this.shouldResetTextarea = false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -92,6 +99,8 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
   }
 
   ngAfterViewInit(): void {
+    // 初期状態のテキストエリアの高さを保存
+    this.captureInitialTextareaHeight();
     this.onMessageInput();
   }
 
@@ -349,6 +358,9 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
         timestamp: new Date(),
       })
       this.shouldScrollToBottom = true;
+      this.newMessage = '';
+      // テキストエリアのサイズを初期サイズに戻す
+      this.shouldResetTextarea = true;
       return;
     }
 
@@ -391,6 +403,8 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
             'success',
             2500
           );
+          // テキストエリアのサイズを初期サイズに戻す
+          this.shouldResetTextarea = true;
           // 送信後、最新のコメントを再取得
           this.loadChatMessages();
         },
@@ -410,6 +424,35 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = newHeight + 'px';
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }
+
+  /**
+   * 初期状態のテキストエリアの高さを取得して保存
+   */
+  private captureInitialTextareaHeight(): void {
+    if (isUndefined(this.messageInputElement)) {
+      return;
+    }
+    
+    const textarea = this.messageInputElement.nativeElement;
+    // 初期状態（rows="1"、テキストなし）の高さを取得
+    textarea.style.height = 'auto';
+    this.initialTextareaHeight = getComputedStyle(textarea).height;
+  }
+
+  /**
+   * テキストエリアを初期サイズにリセット（AfterViewChecked内で実行）
+   */
+  private performTextareaReset(): void {
+    if (isUndefined(this.messageInputElement) || !this.initialTextareaHeight) {
+      return;
+    }
+    
+    const textarea = this.messageInputElement.nativeElement;
+    // 保存しておいた初期高さに戻す
+    textarea.style.height = 'auto';
+    textarea.style.height = this.initialTextareaHeight;
+    textarea.style.overflowY = 'hidden';
   }
 
 
