@@ -293,4 +293,44 @@ export class GitLabApiService {
         };
       });
   }
+
+  /**
+   * 指定されたissueにコメント（Note）を投稿する
+   * @param projectId プロジェクトID
+   * @param issueIid issueの内部ID
+   * @param body コメント本文
+   * @returns Observable<Note> 追加されたNote
+   */
+  postIssueNote(
+    projectId: string,
+    issueIid: number,
+    body: string
+  ): Observable<Note> {
+    if (isNull(this.urlChainBuilder)) {
+      return new Observable<Note>((subscriber) => {
+        subscriber.error(new Error('GitLab host is not configured'));
+      });
+    }
+
+    return this.urlChainBuilder
+      .start()
+      .addPath('api')
+      .addPath('v4')
+      .addPath('projects')
+      .addPath(encodeURIComponent(projectId))
+      .addPath('issues')
+      .addPath(encodeURIComponent(String(issueIid)))
+      .addPath('notes')
+      .addMethod('POST')
+      .addPrivateToken(this.gitlabConfig.config.accessToken)
+      .addOption({ body })
+      .end()
+      .pipe((data: GitLabApiNote) => {
+        const note = convertJsonToNote(data);
+        if (isNull(note)) {
+          throw new Error('Failed to convert GitLab API response to Note');
+        }
+        return note;
+      });
+  }
 }
