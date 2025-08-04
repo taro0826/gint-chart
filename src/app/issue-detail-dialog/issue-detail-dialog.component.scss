@@ -315,8 +315,6 @@ $border-radius-xl: 8px;
           color: var(--text-primary);
           font-size: 13px;
           resize: none;
-          min-height: 60px;
-          max-height: 120px;
 
           &::placeholder {
             color: var(--text-muted);
