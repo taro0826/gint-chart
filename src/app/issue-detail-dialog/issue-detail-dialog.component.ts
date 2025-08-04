@@ -13,6 +13,7 @@ import { Label } from '@src/app/model/label.model';
 import { Note } from '@src/app/model/note.model';
 import { Assertion } from '@src/app/utils/assertion';
 import { catchError, of } from 'rxjs';
+import { isDebug } from '../debug';
 
 interface ChatMessage {
   id: number;
@@ -106,7 +107,11 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
    * サーバーからチャットメッセージを読み込む（全てのページから）
    */
   private loadChatMessages(): void {
-    if (!this.issue) {
+    if (isDebug) {
+      return;
+    }
+
+    if (isUndefined(this.issue)) {
       return;
     }
 
@@ -206,6 +211,10 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
    * コメントのポーリングを開始
    */
   private startCommentPolling(): void {
+    if (isDebug) {
+      return;
+    }
+
     if (!isNull(this.commentPollingIntervalId)) {
       return; // 既にポーリング中
     }
@@ -232,7 +241,7 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
    * ローディング表示は行わず、新しいコメントがある場合とエラー時にトースト通知
    */
   private loadChatMessagesQuietly(): void {
-    if (!this.issue) {
+    if (isUndefined(this.issue)) {
       return;
     }
 
