@@ -10,7 +10,6 @@ import { isUndefined, isNull } from '@src/app/utils/utils';
 import { Issue } from '@src/app/model/issue.model';
 import { Milestone } from '@src/app/model/milestone.model';
 import { Label } from '@src/app/model/label.model';
-import { Member } from '@src/app/model/member.model';
 import { Note } from '@src/app/model/note.model';
 import { Assertion } from '@src/app/utils/assertion';
 import { catchError, of } from 'rxjs';
