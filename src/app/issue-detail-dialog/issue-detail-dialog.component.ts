@@ -5,6 +5,7 @@ import { MilestoneStoreService } from '@src/app/store/milestone-store.service';
 import { LabelStoreService } from '@src/app/store/label-store.service';
 import { MemberStoreService } from '@src/app/store/member-store.service';
 import { GitLabApiService } from '@src/app/git-lab-api/git-lab-api.service';
+import { ToastService } from '@src/app/utils/toast.service';
 import { isUndefined } from '@src/app/utils/utils';
 import { Issue } from '@src/app/model/issue.model';
 import { Milestone } from '@src/app/model/milestone.model';
@@ -45,7 +46,8 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
     private readonly milestoneStore: MilestoneStoreService,
     private readonly labelStore: LabelStoreService,
     private readonly memberStore: MemberStoreService,
-    private readonly gitlabApi: GitLabApiService
+    private readonly gitlabApi: GitLabApiService,
+    private readonly toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -90,7 +92,7 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
   }
 
   /**
-   * サーバーからチャットメッセージを読み込む
+   * サーバーからチャットメッセージを読み込む（全てのページから）
    */
   private loadChatMessages(): void {
     if (!this.issue) {
@@ -98,17 +100,37 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
     }
 
     this.isLoadingMessages = true;
+    this.chatMessages = []; // 既存のメッセージをクリア
 
-    // GitLab APIからNotesを取得
+    // 全ページからNotesを再帰的に取得
+    this.loadAllNotesRecursively(String(this.issue.project_id), this.issue.iid, 0);
+  }
+
+  /**
+   * 全ページのNotesを再帰的に取得する
+   * @param projectId プロジェクトID
+   * @param issueIid IssueのIID
+   * @param page 現在のページ番号
+   */
+  private loadAllNotesRecursively(projectId: string, issueIid: number, page: number): void {
     this.gitlabApi.fetchIssueNotes(
-      String(this.issue.project_id),
-      this.issue.iid,
-      0, // 最初のページ
+      projectId,
+      issueIid,
+      page,
       'asc' // 古い順にソート
     ).pipe(
       catchError((error) => {
-        console.error('チャットメッセージの取得に失敗しました:', error);
-        // エラー時はサンプルデータを表示
+        console.error(`チャットメッセージの取得に失敗しました (ページ ${page}):`, error);
+        
+        // API通信エラーのトーストを表示
+        this.toastService.show(
+          Assertion.no(101),
+          `コメント取得でネットワークエラーが発生しました (ページ ${page})`,
+          'error',
+          5000
+        );
+        
+        // エラー時は空のデータを返す
         return of({
           hasNextPage: false,
           data: []
@@ -116,15 +138,42 @@ export class IssueDetailDialogComponent implements OnInit, AfterViewChecked {
       })
     ).subscribe({
       next: (result) => {
-        this.chatMessages = result.data.map(note => this.convertNoteToMessage(note));
-        this.isLoadingMessages = false;
-        this.shouldScrollToBottom = true;
+        // 現在のページのメッセージを追加
+        const newMessages = result.data.map(note => this.convertNoteToMessage(note));
+        this.chatMessages = [...this.chatMessages, ...newMessages];
+
+        // 次のページがある場合は再帰的に取得
+        if (result.hasNextPage) {
+          this.loadAllNotesRecursively(projectId, issueIid, page + 1);
+        } else {
+          // 全ページの取得が完了
+          this.isLoadingMessages = false;
+          this.shouldScrollToBottom = true;
+          
+          // 成功トーストを表示
+          this.toastService.show(
+            Assertion.no(99),
+            `コメントを${this.chatMessages.length}件取得しました`,
+            'success',
+            3000
+          );
+        }
       },
       error: (error) => {
-        console.error('チャットメッセージの処理中にエラーが発生しました:', error);
         this.isLoadingMessages = false;
+        
+        // エラートーストを表示
+        this.toastService.show(
+          Assertion.no(100),
+          `コメントの取得に失敗しました (ページ ${page})`,
+          'error',
+          5000
+        );
+        
         // エラー時はサンプルメッセージを表示
-        this.loadSampleMessages();
+        if (this.chatMessages.length === 0) {
+          this.loadSampleMessages();
+        }
       }
     });
   }
