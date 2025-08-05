@@ -11,7 +11,7 @@ declare global {
       shell: {
         openExternal: (url: string) => Promise<void>;
       };
-      readGoogleChatConfig: () => Promise<GoogleChatConfig | null>;
+      readGoogleChatConfig: () => Promise<GoogleChatConfig[] | null>;
     };
   }
 }
