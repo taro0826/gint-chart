@@ -8,4 +8,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   shell: {
     openExternal: (url) => ipcRenderer.invoke("open-external", url),
   },
+  readGoogleChatConfig: () => ipcRenderer.invoke("read-google-chat-config"),
 });

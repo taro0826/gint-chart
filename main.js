@@ -184,6 +184,38 @@ function createWindow() {
   });
 
   /**
+   * GoogleChat構成ファイルの取り込みを許可する
+   */
+  ipcMain.handle("read-google-chat-config", async () => {
+    let configPath;
+
+    if (serve) {
+      // 開発環境では現在のディレクトリから読み込み
+      configPath = path.join(__dirname, 'google.chat.config.json');
+    } else {
+      // パッケージ化された環境では実行ファイルと同じディレクトリから読み込み
+      const exePath = process.execPath;
+      const exeDir = path.dirname(exePath);
+      configPath = path.join(exeDir, '..', 'gint-chart-config', 'google.chat.config.json');
+    }
+
+    console.log('Attempting to read Google Chat config from:', configPath);
+
+    try {
+      // ファイルの存在確認
+      if (!fs.existsSync(configPath)) {
+        throw new Error(`Configuration file not found at: ${configPath}`);
+      }
+
+      const data = fs.readFileSync(configPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('Error reading Google Chat config file:', error.message);
+      throw error;
+    }
+  });
+
+  /**
    * 外部リンクを開く
    */
   ipcMain.handle("open-external", async (event, url) => {
