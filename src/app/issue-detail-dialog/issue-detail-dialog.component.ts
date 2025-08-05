@@ -369,12 +369,6 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
     }
 
     if (isUndefined(this.issue)) {
-      this.toastService.show(
-        Assertion.no(105),
-        'イシュー情報が取得できていません。',
-        'error',
-        4000
-      );
       return;
     }
 
