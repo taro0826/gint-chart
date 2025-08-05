@@ -1,3 +1,5 @@
+@import "@src/app/design/scroll-bar.scss";
+
 $spacing-sm: 4px;
 $spacing-md: 8px;
 $spacing-lg: 12px;
@@ -181,9 +183,24 @@ $border-radius-xl: 8px;
           border: 1px solid var(--border-color);
           max-height: 150px;
           overflow-y: auto;
+          
           &.empty-description {
             color: var(--text-muted);
             font-style: italic;
+          }
+
+          &::-webkit-scrollbar {
+            width: $scroll-bar-width;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background-color: $scroll-bar-thumb-color;
+            border-radius: $scroll-bar-radius;
+          }
+
+          &::-webkit-scrollbar-track {
+            background-color: $scroll-bar-track-color;
+            border-radius: $scroll-bar-radius;
           }
         }
       }
@@ -295,6 +312,20 @@ $border-radius-xl: 8px;
             100% { transform: rotate(360deg); }
           }
         }
+              
+        &::-webkit-scrollbar {
+          width: $scroll-bar-width;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background-color: $scroll-bar-thumb-color;
+          border-radius: $scroll-bar-radius;
+        }
+
+        &::-webkit-scrollbar-track {
+          background-color: $scroll-bar-track-color;
+          border-radius: $scroll-bar-radius;
+        }
       }
 
       .chat-input-area {
@@ -324,6 +355,20 @@ $border-radius-xl: 8px;
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+          
+          &::-webkit-scrollbar {
+            width: $scroll-bar-width;
+          }
+
+          &::-webkit-scrollbar-thumb {
+            background-color: $scroll-bar-thumb-color;
+            border-radius: $scroll-bar-radius;
+          }
+
+          &::-webkit-scrollbar-track {
+            background-color: $scroll-bar-track-color;
+            border-radius: $scroll-bar-radius;
           }
         }
 
