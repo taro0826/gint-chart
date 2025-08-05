@@ -26,6 +26,7 @@ import { FilterSettingsDialogExpansionService } from './filter-settings-dialog/f
 import { ViewService } from './service/view.service';
 import { PollingService } from './utils/polling.service';
 import { IssueCreateDialogExpansionService } from './issue-create-dialog/issue-create-dialog-expansion.service';
+import { GoogleChatConfigService } from './service/google-chat-config.service';
 
 const POLLING_INTERVAL = 10 * 60 * 1000; // 10分間隔
 
@@ -79,7 +80,8 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
     private readonly filterSettingsDialogExpansionService: FilterSettingsDialogExpansionService,
     private readonly viewService: ViewService,
     private readonly pollingService: PollingService,
-    private readonly issueCreateDialogExpansionService: IssueCreateDialogExpansionService
+    private readonly issueCreateDialogExpansionService: IssueCreateDialogExpansionService,
+    private readonly googleChatConfigService: GoogleChatConfigService
   ) {}
 
   ngOnInit() {
@@ -253,6 +255,9 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
           this.startPolling();
         },
       });
+
+    // チャットメンション用の設定を読み込む
+    this.googleChatConfigService.readGoogleChatConfig().subscribe();
 
     this.toastService.isShow$.pipe(takeUntil(this.destroy$)).subscribe({
       next: (isShow: boolean) => {
