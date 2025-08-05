@@ -395,6 +395,10 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
          * TODO 差出人（私）を記す
          */
 
+        /**
+         * TODO Gint-ChartのURLを記す
+         */
+
         fetch(
           space.googleChatWebhookUrl,
           {
