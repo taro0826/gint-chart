@@ -1,118 +1,177 @@
 <div class="issue-detail-dialog" role="dialog" aria-labelledby="issue-title">
-  <div *ngIf="issue" class="issue-content">
-    <div class="title-section">
-      <h1 id="issue-title" class="issue-title">
-        {{ issue.title }}
-      </h1>
-      <button
-        *ngIf="getIssueUrl()"
-        mat-icon-button
-        class="url-button"
-        [attr.href]="getIssueUrl()"
-        (click)="openIssueUrl()"
-        title="GitLabでIssueを開く"
-        aria-label="GitLabでIssueを開く"
-      >
-        <mat-icon>open_in_new</mat-icon>
-      </button>
+  <div *ngIf="issue" class="dialog-content">
+    <!-- 左半分: 既存の情報 -->
+    <div class="left-panel">
+      <div class="issue-content">
+        <div class="title-section">
+          <h1 id="issue-title" class="issue-title">
+            {{ issue.title }}
+          </h1>
+          <button
+            *ngIf="getIssueUrl()"
+            mat-icon-button
+            class="url-button"
+            [attr.href]="getIssueUrl()"
+            (click)="openIssueUrl()"
+            title="GitLabでIssueを開く"
+            aria-label="GitLabでIssueを開く"
+          >
+            <mat-icon>open_in_new</mat-icon>
+          </button>
+        </div>
+
+        <section class="issue-meta" aria-label="課題の基本情報">
+          <div class="meta-item">
+            <span class="label">IID</span>
+            <span class="value">{{ issue.iid }}</span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">ステータス</span>
+            <span class="value">
+              {{ getStatusName(issue.status) }}
+            </span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">担当者</span>
+            <span class="value">
+              {{ getAssigneeName(issue.assignee_id) }}
+            </span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">開始日</span>
+            <span class="value" [ngClass]="{ unset: !issue.start_date }">
+              {{
+                issue.start_date
+                  ? (issue.start_date | date : "yyyy/MM/dd")
+                  : "未設定"
+              }}
+            </span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">終了日</span>
+            <span class="value" [ngClass]="{ unset: !issue.end_date }">
+              {{
+                issue.end_date ? (issue.end_date | date : "yyyy/MM/dd") : "未設定"
+              }}
+            </span>
+          </div>
+        </section>
+
+        <section class="issue-category" aria-label="カテゴリ">
+          <span class="label">カテゴリ</span>
+          <div class="label-tags">
+            <span
+              *ngFor="
+                let label of getCategoryLabels(issue.category);
+                trackBy: trackByLabel
+              "
+              class="label-tag category-tag"
+              [style.background-color]="label.color"
+              [style.color]="getContrastColor(label.color)"
+            >
+              {{ label.name }}
+            </span>
+            <span
+              *ngIf="!issue.category || issue.category.length === 0"
+              class="no-labels"
+            >
+              カテゴリが設定されていません
+            </span>
+          </div>
+        </section>
+
+        <section class="issue-resource" aria-label="リソース">
+          <span class="label">リソース</span>
+          <div class="label-tags">
+            <span
+              *ngFor="
+                let label of getResourceLabels(issue.resource);
+                trackBy: trackByLabel
+              "
+              class="label-tag resource-tag"
+              [style.background-color]="label.color"
+              [style.color]="getContrastColor(label.color)"
+            >
+              {{ label.name }}
+            </span>
+            <span
+              *ngIf="!issue.resource || issue.resource.length === 0"
+              class="no-labels"
+            >
+              リソースが設定されていません
+            </span>
+          </div>
+        </section>
+
+        <section class="issue-description" aria-label="説明">
+          <h2 class="description-title">説明</h2>
+          <div
+            class="description-content"
+            [class.empty-description]="!issue.description"
+          >
+            {{ issue.description || "説明がありません" }}
+          </div>
+        </section>
+      </div>
     </div>
 
-    <section class="issue-meta" aria-label="課題の基本情報">
-      <div class="meta-item">
-        <span class="label">IID</span>
-        <span class="value">{{ issue.iid }}</span>
+    <!-- 右半分: チャットエリア -->
+    <div class="right-panel">
+      <div class="chat-area">
+        <div class="chat-header">
+          <h2 class="chat-title">コメント</h2>
+        </div>
+        
+        <div class="chat-messages" #chatMessagesContainer>
+          <!-- ローディング状態 -->
+          <div *ngIf="isLoadingMessages" class="loading-messages">
+            <div class="loading-spinner"></div>
+            <span>コメントを読み込み中...</span>
+          </div>
+          
+          <!-- メッセージ一覧 -->
+          <div *ngIf="!isLoadingMessages">
+            <div *ngFor="let message of chatMessages; trackBy: trackByMessage" class="message">
+              <div class="message-header">
+                <span class="message-author">{{ message.author }}</span>
+                <span class="message-time">{{ message.timestamp | date:'yyyy/MM/dd HH:mm' }}</span>
+              </div>
+              <div class="message-content">{{ message.content }}</div>
+            </div>
+            
+            <div *ngIf="chatMessages.length === 0" class="no-messages">
+              まだコメントがありません
+            </div>
+          </div>
+        </div>
+        
+        <div class="chat-input-area">
+          <textarea
+            #messageInput
+            [(ngModel)]="newMessage"
+            class="message-input"
+            placeholder="コメントを入力..."
+            rows="1"
+            (input)="onMessageInput()"
+          ></textarea>
+          <div class="button-container">
+            <button
+              mat-raised-button
+              color="primary"
+              class="send-button"
+              [disabled]="!newMessage.trim()"
+              (click)="sendMessage()"
+            >
+              送信
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div class="meta-item">
-        <span class="label">ステータス</span>
-        <span class="value">
-          {{ getStatusName(issue.status) }}
-        </span>
-      </div>
-
-      <div class="meta-item">
-        <span class="label">担当者</span>
-        <span class="value">
-          {{ getAssigneeName(issue.assignee_id) }}
-        </span>
-      </div>
-
-      <div class="meta-item">
-        <span class="label">開始日</span>
-        <span class="value" [ngClass]="{ unset: !issue.start_date }">
-          {{
-            issue.start_date
-              ? (issue.start_date | date : "yyyy/MM/dd")
-              : "未設定"
-          }}
-        </span>
-      </div>
-
-      <div class="meta-item">
-        <span class="label">終了日</span>
-        <span class="value" [ngClass]="{ unset: !issue.end_date }">
-          {{
-            issue.end_date ? (issue.end_date | date : "yyyy/MM/dd") : "未設定"
-          }}
-        </span>
-      </div>
-    </section>
-
-    <section class="issue-category" aria-label="カテゴリ">
-      <span class="label">カテゴリ</span>
-      <div class="label-tags">
-        <span
-          *ngFor="
-            let label of getCategoryLabels(issue.category);
-            trackBy: trackByLabel
-          "
-          class="label-tag category-tag"
-          [style.background-color]="label.color"
-          [style.color]="getContrastColor(label.color)"
-        >
-          {{ label.name }}
-        </span>
-        <span
-          *ngIf="!issue.category || issue.category.length === 0"
-          class="no-labels"
-        >
-          カテゴリが設定されていません
-        </span>
-      </div>
-    </section>
-
-    <section class="issue-resource" aria-label="リソース">
-      <span class="label">リソース</span>
-      <div class="label-tags">
-        <span
-          *ngFor="
-            let label of getResourceLabels(issue.resource);
-            trackBy: trackByLabel
-          "
-          class="label-tag resource-tag"
-          [style.background-color]="label.color"
-          [style.color]="getContrastColor(label.color)"
-        >
-          {{ label.name }}
-        </span>
-        <span
-          *ngIf="!issue.resource || issue.resource.length === 0"
-          class="no-labels"
-        >
-          リソースが設定されていません
-        </span>
-      </div>
-    </section>
-
-    <section class="issue-description" aria-label="説明">
-      <h2 class="description-title">説明</h2>
-      <div
-        class="description-content"
-        [class.empty-description]="!issue.description"
-      >
-        {{ issue.description || "説明がありません" }}
-      </div>
-    </section>
+    </div>
   </div>
 
   <div *ngIf="!issue" class="no-issue">課題情報が見つかりません</div>

@@ -4,6 +4,8 @@ import { first, Observable } from 'rxjs';
 import { Assertion } from '@src/app/utils/assertion';
 import { UrlChainBuilder } from '@src/app/utils/url-chain-builder';
 import { GitLabConfigStoreService } from '@src/app/store/git-lab-config-store.service';
+import { GitLabApiNote } from './git-lab-note.model';
+import { Note, convertJsonToNote } from '@src/app/model/note.model';
 
 /**
  * XXX miyoshi
@@ -241,6 +243,96 @@ export class GitLabApiService {
           throw new Error('Failed to convert GitLab API response');
         }
         return convertedData;
+      });
+    }
+
+  /** 
+   * 指定されたissueのコメント（Notes）を取得する
+   * @param projectId プロジェクトID
+   * @param issueIid issueの内部ID
+   * @param page ページ数（デフォルト: 0）
+   * @param sort ソート順（デフォルト: 'asc' - 古い順、'desc' - 新しい順）
+   * @param orderBy ソート基準（デフォルト: 'created_at'）
+   * @returns Observable<PagenationResult<Note>> コメントのページネーション結果
+   */
+  fetchIssueNotes(
+    projectId: string,
+    issueIid: number,
+    page: number = firstPage,
+    sort: 'asc' | 'desc' = 'asc',
+    orderBy: 'created_at' | 'updated_at' = 'created_at'
+  ): Observable<PagenationResult<Note>> {
+    if (isNull(this.urlChainBuilder)) {
+      return new Observable<PagenationResult<Note>>((subscriber) => {
+        subscriber.error(new Error('GitLab host is not configured'));
+      });
+    };
+
+    return this.urlChainBuilder
+      .start()
+      .addPath('api')
+      .addPath('v4')
+      .addPath('projects')
+      .addPath(encodeURIComponent(projectId))
+      .addPath('issues')
+      .addPath(encodeURIComponent(String(issueIid)))
+      .addPath('notes')
+      .addPath(`?per_page=${pagenationMax}&page=${page}&sort=${sort}&order_by=${orderBy}`)
+      .addMethod('GET')
+      .addPrivateToken(this.gitlabConfig.config.accessToken)
+      .end()
+      .pipe((data: GitLabApiNote[]) => {
+        let hasNextPage = true;
+        const notes = Array.isArray(data) ? data.map(convertJsonToNote) : [];
+        if (notes.length < pagenationMax) {
+          hasNextPage = false;
+        }
+        return {
+          hasNextPage,
+          data: notes
+          .filter((note): note is Note => !isNull(note))
+          .filter((note) => note.system === false) // システムノートは除外,
+        };
+      });
+  }
+
+  /**
+   * 指定されたissueにコメント（Note）を投稿する
+   * @param projectId プロジェクトID
+   * @param issueIid issueの内部ID
+   * @param body コメント本文
+   * @returns Observable<Note> 追加されたNote
+   */
+  postIssueNote(
+    projectId: string,
+    issueIid: number,
+    body: string
+  ): Observable<Note> {
+    if (isNull(this.urlChainBuilder)) {
+      return new Observable<Note>((subscriber) => {
+        subscriber.error(new Error('GitLab host is not configured'));
+      });
+    }
+
+    return this.urlChainBuilder
+      .start()
+      .addPath('api')
+      .addPath('v4')
+      .addPath('projects')
+      .addPath(encodeURIComponent(projectId))
+      .addPath('issues')
+      .addPath(encodeURIComponent(String(issueIid)))
+      .addPath('notes')
+      .addMethod('POST')
+      .addPrivateToken(this.gitlabConfig.config.accessToken)
+      .addOption({ body })
+      .end()
+      .pipe((data: GitLabApiNote) => {
+        const note = convertJsonToNote(data);
+        if (isNull(note)) {
+          throw new Error('Failed to convert GitLab API response to Note');
+        }
+        return note;
       });
   }
 }
