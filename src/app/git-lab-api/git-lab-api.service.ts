@@ -241,7 +241,9 @@ export class GitLabApiService {
         }
         return {
           hasNextPage,
-          data: notes.filter((note): note is Note => !isNull(note)),
+          data: notes
+          .filter((note): note is Note => !isNull(note))
+          .filter((note) => note.system === false) // システムノートは除外,
         };
       });
   }

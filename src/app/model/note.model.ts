@@ -39,6 +39,12 @@ export interface Note {
    * @type {number}
    */
   issue_iid: number;
+
+  /**
+   * コメントがシステムノートかどうか
+   * @type {boolean}
+   */
+  system: boolean;
 }
 
 /**
@@ -79,5 +85,6 @@ export function convertJsonToNote(apiNote: GitLabApiNote): Note | null {
     created_at,
     updated_at,
     issue_iid: apiNote.noteable_id, // GitLabのAPIではnoteable_idがissueのiidに対応
+    system: apiNote.system,
   };
 } 
