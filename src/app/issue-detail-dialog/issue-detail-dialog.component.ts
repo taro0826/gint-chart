@@ -14,6 +14,7 @@ import { Note } from '@src/app/model/note.model';
 import { Assertion } from '@src/app/utils/assertion';
 import { catchError, of } from 'rxjs';
 import { isDebug } from '../debug';
+import { GoogleChatConfigService } from '../service/google-chat-config.service';
 
 interface ChatMessage {
   id: number;
@@ -54,7 +55,8 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
     private readonly labelStore: LabelStoreService,
     private readonly memberStore: MemberStoreService,
     private readonly gitlabApi: GitLabApiService,
-    private readonly toastService: ToastService
+    private readonly toastService: ToastService,
+    private readonly googleChatConfigService: GoogleChatConfigService,
   ) {}
 
   ngOnInit(): void {
@@ -375,6 +377,36 @@ export class IssueDetailDialogComponent implements OnInit, OnDestroy, AfterViewC
     const messageBody = this.newMessage.trim();
     this.newMessage = '';
     this.shouldScrollToBottom = true;
+
+    const space = this.googleChatConfigService.getConfig().find(space => space.projectId === this.issue!.project_id);
+    if (!isUndefined(space)) {
+      const mentionRequered = space.member.filter(item => messageBody.includes(`@${item.gitlabToken}`));
+      if (mentionRequered.length > 0) {
+        let text = messageBody;
+        /** 
+         * メンションがある場合
+         * Google ChatのWebhookにメッセージを送る
+         */
+        mentionRequered.forEach(item => {
+          text = text.replace(`@${item.gitlabToken}`, `<users/${item.googleChatUserId}>`);
+        });
+
+        /**
+         * TODO 差出人（私）を記す
+         */
+
+        fetch(
+          space.googleChatWebhookUrl,
+          {
+            method: 'POST',
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ text })
+          }
+        ).then(console.log);
+      }
+    }
 
     // GitLab APIに新しいNoteを送信
     this.gitlabApi.postIssueNote(String(this.issue.project_id), this.issue.iid, messageBody)
