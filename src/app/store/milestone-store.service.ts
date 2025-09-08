@@ -73,31 +73,31 @@ export class MilestoneStoreService {
   private fetchMilestonesForProject(
     projectId: number
   ): Observable<Milestone[]> {
-    let currentPage = 0;
+    let currentPage = 1;
+    return this.gitlabApi.fetch<GitLabApiMilestone, Milestone>(
+      String(projectId),
+      'milestones',
+      convertJsonToMilestone,
+      currentPage
+    )
+    .pipe(
+      expand((result) => {
+        if (result.hasNextPage == false) {
+          return of();
+        }
+        currentPage++;
         return this.gitlabApi.fetch<GitLabApiMilestone, Milestone>(
           String(projectId),
           'milestones',
           convertJsonToMilestone,
           currentPage
         )
-        .pipe(
-          expand((result) => {
-            if (result.hasNextPage == false) {
-              return of();
-            }
-            currentPage++;
-            return this.gitlabApi.fetch<GitLabApiMilestone, Milestone>(
-              String(projectId),
-              'milestones',
-              convertJsonToMilestone,
-              currentPage
-            )
-          }),
-          concatMap(result => result.data),
-          toArray(),
-          tap((milestones) => {
-            this.milestonesSubject.next(milestones);
-          })
-        )
+      }),
+      concatMap(result => result.data),
+      toArray(),
+      tap((milestones) => {
+        this.milestonesSubject.next(milestones);
+      })
+    )
   }
 }

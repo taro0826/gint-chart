@@ -90,7 +90,7 @@ export class IssuesStoreService {
    * @returns Observable<Issue[]> 取得したissues配列を流すObservable
    */
   private fetchIssuesForProject(projectId: number): Observable<Issue[]> {
-    let currentPage = 0;
+    let currentPage = 1;
     return this.gitlabApi.fetch<GitLabApiIssue, Issue>(
       String(projectId),
       'issues',
@@ -113,6 +113,7 @@ export class IssuesStoreService {
       concatMap(result => result.data),
       toArray(),
       tap((issues) => {
+        console.log(issues);
         this.issuesSubject.next(issues);
       })
     )
