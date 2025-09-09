@@ -161,7 +161,7 @@ export class IssueCreateDialogComponent implements OnInit {
     this.category.forEach((categoryId: number) => {
       const categoryLabel = this.labelStore.findCategoryLabel(categoryId);
       if (categoryLabel) {
-        labels.push(categoryLabel.name);
+        labels.push(`$$category: ${categoryLabel.name}`);
       }
     });
     
@@ -169,7 +169,7 @@ export class IssueCreateDialogComponent implements OnInit {
     this.resource.forEach((resourceId: number) => {
       const resourceLabel = this.labelStore.findResourceLabel(resourceId);
       if (resourceLabel) {
-        labels.push(resourceLabel.name);
+        labels.push(`$$resource: ${resourceLabel.name}`);
       }
     });
 
